@@ -237,7 +237,7 @@ def output_nsconf(zones: List[InfobloxZone], conf: dict):
             print("    type slave;")
             print(f'    file "{zfilename}";')
             print(f"    masters {{ {master}; }};")
-            print("}};")
+            print("};")
             print("")
 
         sys.stdout = original_stdout
