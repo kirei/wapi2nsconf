@@ -234,10 +234,10 @@ def output_nsconf(zones: List[InfobloxZone], conf: dict):
             zfilename = os.path.join(path, zone.fqdn)
             print(f"# {zone.description}")
             print(f'zone "{zone.fqdn}" {{')
-            print(f"    type slave;")
+            print("    type slave;")
             print(f'    file "{zfilename}";')
             print(f"    masters {{ {master}; }};")
-            print(f"}};")
+            print("}};")
             print("")
 
         sys.stdout = original_stdout
@@ -255,7 +255,7 @@ def output_nsconf(zones: List[InfobloxZone], conf: dict):
         for zone in zones:
             zfilename = os.path.join(path, zone.fqdn)
             print(f"# {zone.description}")
-            print(f"zone:")
+            print("zone:")
             print(f"    name: {zone.fqdn}")
             print(f"    zonefile: {zfilename}")
             for m in conf.get("masters", []):
