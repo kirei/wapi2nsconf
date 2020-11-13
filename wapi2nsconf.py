@@ -259,7 +259,7 @@ def output_nsconf(zones: List[InfobloxZone], conf: dict):
             print(f"    name: {zone.fqdn}")
             print(f"    zonefile: {zfilename}")
             for m in conf.get("masters", []):
-                print(f"    request-ixfr: {m['ip']} {m['tsig']}")
+                print(f"    request-xfr: {m['ip']} {m['tsig']}")
                 print(f"    allow-notify: {m['ip']} {m['tsig']}")
             print("")
 
