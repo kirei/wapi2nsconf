@@ -1,0 +1,33 @@
+wapi:
+  endpoint: https://infoblox.example.com/wapi/v2.5
+  version: 2.5
+  username: username
+  password: password
+  check_hostname: True
+
+view: default
+
+ns_groups:
+  - "Group1"
+  - "Group2"
+
+extattr_key: "foo"
+extattr_value: "bar"
+
+masters:
+  - ip: 10.0.0.1
+    tsig: tsig.example.com
+
+output:
+  bind:
+    filename: bind.conf
+    master: infoblox
+    path: /var/named/infoblox
+  nsd:
+    filename: nsd.conf
+    master: infoblox
+  knot:
+    filename: knot.conf
+    master: infoblox
+    template: infoblox
+    storage: /var/knot/infoblox
