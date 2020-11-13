@@ -5,14 +5,13 @@ wapi:
   password: password
   check_hostname: True
 
-view: default
-
-ns_groups:
-  - "Group1"
-  - "Group2"
-
-extattr_key: "foo"
-extattr_value: "bar"
+ipam:
+  view: default
+  ns_groups:
+    - "Group1"
+    - "Group2"
+  extattr_key: "foo"
+  extattr_value: "bar"
 
 masters:
   - ip: 10.0.0.1

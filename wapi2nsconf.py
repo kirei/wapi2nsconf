@@ -21,6 +21,7 @@ from requests.packages.urllib3.poolmanager import PoolManager
 logger = logging.getLogger(__name__)
 
 DEFAULT_CONF_FILENAME = "wapi2nsconf.yaml"
+DEFAULT_VIEW = "default"
 DEFAULT_MASTER = "infoblox"
 DEFAULT_TEMPLATE = "infoblox"
 
@@ -36,10 +37,14 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Required("check_hostname"): bool,
             }
         ),
-        vol.Required("view"): str,
-        "ns_groups": [str],
-        "extattr_key": str,
-        "extattr_value": str,
+        "ipam": vol.Schema(
+            {
+                "view": str,
+                "ns_groups": [str],
+                "extattr_key": str,
+                "extattr_value": str,
+            }
+        ),
         vol.Required("masters"): [
             vol.Schema({vol.Required("ip"): vol.FqdnUrl, vol.Required("tsig"): str})
         ],
@@ -55,6 +60,7 @@ CONFIG_SCHEMA = vol.Schema(
                 "nsd": vol.Schema(
                     {
                         vol.Required("filename"): str,
+                        "master": str,
                     }
                 ),
                 "knot": vol.Schema(
@@ -167,7 +173,6 @@ def filter_zones(zones: List[InfobloxZone], conf: dict) -> List[InfobloxZone]:
 
     res = []
     ns_groups = conf.get("ns_groups", None)
-
     extattr_key = conf.get("extattr_key")
     extattr_val = conf.get("extattr_value")
 
@@ -340,6 +345,7 @@ def main():
         sys.exit(0)
 
     wapi_conf = conf["wapi"]
+    ipam_conf = conf.get("ipam", {})
 
     session = requests.Session()
     session.verify = wapi_conf.get("ca_bundle")
@@ -352,8 +358,8 @@ def main():
         version=wapi_conf.get("version"),
     )
 
-    wapi_zones = wapi.zones(view=conf["view"])
-    zones = filter_zones(wapi_zones, conf)
+    wapi_zones = wapi.zones(view=ipam_conf.get("view", DEFAULT_VIEW))
+    zones = filter_zones(wapi_zones, ipam_conf)
     output_nsconf(zones, conf)
 
 
