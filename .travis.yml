@@ -1,0 +1,16 @@
+language: python
+cache: pip
+python:
+  - '3.7'
+  - '3.8'
+  - '3.9'
+before_install:
+  - pip install poetry
+install:
+  - poetry install
+script:
+  - poetry run pylama wapi2nsconf.py
+  - poetry run isort --check wapi2nsconf.py
+  - poetry run black --check wapi2nsconf.py
+notifications:
+  email: false
