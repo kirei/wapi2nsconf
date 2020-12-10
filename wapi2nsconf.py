@@ -30,12 +30,12 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
 import logging
-import os
 import sys
 import warnings
 from dataclasses import dataclass
 from typing import List, Optional
 
+import jinja2
 import requests
 import urllib3
 import voluptuous as vol
@@ -47,9 +47,8 @@ from requests.packages.urllib3.poolmanager import PoolManager
 logger = logging.getLogger(__name__)
 
 DEFAULT_CONF_FILENAME = "wapi2nsconf.yaml"
+DEFAULT_TEMPLATES_PATH = "templates/"
 DEFAULT_VIEW = "default"
-DEFAULT_MASTER = "infoblox"
-DEFAULT_TEMPLATE = "infoblox"
 
 CONFIG_SCHEMA = vol.Schema(
     {
@@ -74,31 +73,15 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Required("masters"): [
             vol.Schema({vol.Required("ip"): vol.FqdnUrl, vol.Required("tsig"): str})
         ],
-        vol.Required("output"): vol.Schema(
-            {
-                "bind": vol.Schema(
-                    {
-                        vol.Required("filename"): str,
-                        "master": str,
-                        "path": str,
-                    }
-                ),
-                "nsd": vol.Schema(
-                    {
-                        vol.Required("filename"): str,
-                        "master": str,
-                    }
-                ),
-                "knot": vol.Schema(
-                    {
-                        vol.Required("filename"): str,
-                        "master": str,
-                        "template": str,
-                        "storage": str,
-                    }
-                ),
-            }
-        ),
+        vol.Required("output"): [
+            vol.Schema(
+                {
+                    vol.Required("template"): vol.IsFile,
+                    vol.Required("filename"): str,
+                    "variables": dict,
+                }
+            )
+        ],
     }
 )
 
@@ -110,11 +93,6 @@ class HostNameIgnoringAdapter(HTTPAdapter):
         self.poolmanager = PoolManager(
             num_pools=connections, maxsize=maxsize, block=block, assert_hostname=False
         )
-
-
-class NoAliasDumper(yaml.Dumper):
-    def ignore_aliases(self, data):
-        return True
 
 
 @dataclass(frozen=True)
@@ -239,87 +217,22 @@ def filter_zones(zones: List[InfobloxZone], conf: dict) -> List[InfobloxZone]:
     return res
 
 
-def output_nsconf(zones: List[InfobloxZone], conf: dict):
+def output_nsconf(zones: List[InfobloxZone], conf: dict, templates_path: str) -> None:
 
-    bind_output = conf["output"].get("bind")
-    if bind_output:
-        master = bind_output.get("master", "infoblox")
-        path = bind_output.get("path", "")
+    loader = jinja2.FileSystemLoader(templates_path)
+    env = jinja2.Environment(loader=loader)
 
-        output_file = open(bind_output["filename"], "wt")
-        original_stdout = sys.stdout
-        sys.stdout = output_file
+    for output in conf.get("output", []):
 
-        print(f"masters {master} {{")
-        for m in conf.get("masters", []):
-            print(f"    {m['ip']} key {m['tsig']};")
-        print("}")
-        print("")
+        template = env.get_template(
+            output["template"], globals=output.get("variables", {})
+        )
+        res = template.render(zones=zones, masters=conf.get("masters", []))
 
-        for zone in zones:
-            zfilename = os.path.join(path, zone.fqdn)
-            print(f"# {zone.description}")
-            print(f'zone "{zone.fqdn}" {{')
-            print("    type slave;")
-            print(f'    file "{zfilename}";')
-            print(f"    masters {{ {master}; }};")
-            print("};")
-            print("")
-
-        sys.stdout = original_stdout
-        output_file.close()
-
-    nsd_output = conf["output"].get("nsd")
-    if nsd_output:
-        master = nsd_output.get("master", DEFAULT_MASTER)
-        path = nsd_output.get("path", "")
-
-        output_file = open(nsd_output["filename"], "wt")
-        original_stdout = sys.stdout
-        sys.stdout = output_file
-
-        for zone in zones:
-            zfilename = os.path.join(path, zone.fqdn)
-            print(f"# {zone.description}")
-            print("zone:")
-            print(f"    name: {zone.fqdn}")
-            print(f"    zonefile: {zfilename}")
-            for m in conf.get("masters", []):
-                print(f"    request-xfr: {m['ip']} {m['tsig']}")
-                print(f"    allow-notify: {m['ip']} {m['tsig']}")
-            print("")
-
-        sys.stdout = original_stdout
-        output_file.close()
-
-    knot_output = conf["output"].get("knot")
-    if knot_output:
-        knot_config = {}
-        master_base = knot_output.get("master", DEFAULT_MASTER)
-        template_name = knot_output.get("template", DEFAULT_TEMPLATE)
-        masters = []
-        count = 0
-
-        knot_config["remote"] = []
-        for m in conf.get("masters", []):
-            count += 1
-            masters.append(f"{master_base}_{count}")
-            knot_config["remote"].append(
-                {"id": masters[-1], "address": m["ip"], "key": m["tsig"]}
-            )
-
-        template = {"id": template_name, "master": masters}
-        if "storage" in knot_output:
-            template["storage"] = knot_output["storage"]
-
-        knot_config["template"] = template
-
-        knot_config["zone"] = []
-        for zone in zones:
-            knot_config["zone"].append({"domain": zone.fqdn, "template": template_name})
-
-        with open(knot_output["filename"], "wt") as output_file:
-            output_file.write(yaml.dump(knot_config, Dumper=NoAliasDumper))
+        output_filename = output["filename"]
+        with open(output_filename, "wt") as output_file:
+            output_file.write(res)
+        logger.info("Output written to %s", output_filename)
 
 
 def main():
@@ -339,6 +252,14 @@ def main():
         dest="check_config",
         action="store_true",
         help="Check configuration only",
+    )
+    parser.add_argument(
+        "--templates",
+        dest="templates",
+        default=DEFAULT_TEMPLATES_PATH,
+        metavar="path",
+        help="Templates path",
+        required=False,
     )
     parser.add_argument(
         "--debug", dest="debug", action="store_true", help="Print debug information"
@@ -386,7 +307,7 @@ def main():
 
     wapi_zones = wapi.zones(view=ipam_conf.get("view", DEFAULT_VIEW))
     zones = filter_zones(wapi_zones, ipam_conf)
-    output_nsconf(zones, conf)
+    output_nsconf(zones, conf, args.templates)
 
 
 if __name__ == "__main__":
