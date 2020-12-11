@@ -181,7 +181,7 @@ def main():
         parser.print_help()
         sys.exit(0)
 
-    validate_config()
+    validate_config(conf)
     if args.check_config:
         sys.exit(0)
 
