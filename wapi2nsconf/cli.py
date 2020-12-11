@@ -30,6 +30,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
 import logging
+import re
 import sys
 import warnings
 from typing import List, Optional
@@ -73,6 +74,12 @@ def get_session(conf: dict) -> requests.Session:
         session.mount("https://", HostNameIgnoringAdapter())
     session.auth = (conf["username"], conf["password"])
     return session
+
+
+def guess_wapi_version(endpoint: str) -> Optional[float]:
+    """Guess WAPI version given endpoint URL"""
+    match = re.match(r".+\/wapi\/v(\d+\.\d+)$", endpoint)
+    return float(match.group(1)) if match else None
 
 
 def filter_zones(zones: List[InfobloxZone], conf: dict) -> List[InfobloxZone]:
@@ -202,12 +209,13 @@ def main():
     wapi_conf = conf["wapi"]
     ipam_conf = conf.get("ipam", {})
 
-    session = get_session(wapi_conf)
-
+    wapi_session = get_session(wapi_conf)
+    wapi_endpoint = wapi_conf["endpoint"]
+    wapi_version = wapi_conf.get("version", guess_wapi_version(wapi_endpoint))
     wapi = WAPI(
-        session=session,
-        endpoint=wapi_conf["endpoint"],
-        version=wapi_conf.get("version"),
+        session=wapi_session,
+        endpoint=wapi_endpoint,
+        version=wapi_version,
     )
 
     all_zones = wapi.zones(view=ipam_conf.get("view", DEFAULT_VIEW))

@@ -14,7 +14,6 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Required("wapi"): vol.Schema(
             {
                 vol.Required("endpoint"): vol.FqdnUrl,
-                "version": float,
                 vol.Required("username"): str,
                 vol.Required("password"): str,
                 "ca_bundle": vol.IsFile,
