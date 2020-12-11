@@ -32,9 +32,12 @@ The configuration file is written in [YAML](https://yaml.org/). Example configur
       username: username
       password: password
       check_hostname: True
+      verify: True
       ca_bundle: ca.pem
 
 ### IPAM Filters
+
+The IPAM filters configures what view to use to find zones. Zones can also be filtered based on name server groups (`ns_groups`) and external attribute (key/value). There's a logic OR between `ns_groups` and `extattr_key`, so a zone is include if it is qualified by any of these options. If the `extattr_value` is configured, the `extattr_key` must have this value. If not specified any value of `extattr_key` is accepted.
 
     ipam:
       view: default
@@ -53,6 +56,7 @@ The configuration file is written in [YAML](https://yaml.org/). Example configur
 ### Configuration File Output
 
     output:
+
       - template: knot.conf
         filename: knot.conf
         variables:
