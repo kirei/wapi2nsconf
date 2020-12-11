@@ -9,8 +9,8 @@ before_install:
 install:
   - poetry install
 script:
-  - poetry run pylama wapi2nsconf.py
-  - poetry run isort --check wapi2nsconf.py
-  - poetry run black --check wapi2nsconf.py
+  - poetry run pylama wapi2nsconf
+  - poetry run isort --check wapi2nsconf
+  - poetry run black --check wapi2nsconf
 notifications:
   email: false
