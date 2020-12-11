@@ -32,6 +32,7 @@ The configuration file is written in [YAML](https://yaml.org/). Example configur
       username: username
       password: password
       check_hostname: True
+      ca_bundle: ca.pem
 
 ### IPAM Filters
 
