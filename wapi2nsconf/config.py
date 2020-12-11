@@ -4,23 +4,10 @@ import ipaddress
 
 import voluptuous as vol
 import voluptuous.humanize
-from voluptuous.schema_builder import message
+from voluptuous.validators import DOMAIN_REGEX
 
-
-class IPInvalid(vol.Invalid):
-    """The value is not valid IP."""
-
-
-@message("expected an IP address", cls=IPInvalid)
-def IPAddress(v):
-    try:
-        if not v:
-            raise IPInvalid("expected an IP address")
-        ipaddress.ip_address(v)
-        return v
-    except:
-        raise ValueError
-
+IP_ADDRESS = ipaddress.ip_address
+DOMAIN_NAME = vol.Any(vol.Match("\w+"), vol.Match(DOMAIN_REGEX))
 
 CONFIG_SCHEMA = vol.Schema(
     {
@@ -43,7 +30,9 @@ CONFIG_SCHEMA = vol.Schema(
             }
         ),
         vol.Required("masters"): [
-            vol.Schema({vol.Required("ip"): IPAddress, vol.Required("tsig"): str})
+            vol.Schema(
+                {vol.Required("ip"): IP_ADDRESS, vol.Required("tsig"): DOMAIN_NAME}
+            )
         ],
         vol.Required("output"): [
             vol.Schema(
