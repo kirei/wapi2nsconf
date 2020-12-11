@@ -18,7 +18,8 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Required("username"): str,
                 vol.Required("password"): str,
                 "ca_bundle": vol.IsFile,
-                vol.Required("check_hostname"): bool,
+                "check_hostname": bool,
+                "verify": bool,
             }
         ),
         "ipam": vol.Schema(
