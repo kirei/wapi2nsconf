@@ -18,15 +18,20 @@ masters:
     tsig: tsig.example.com
 
 output:
-  bind:
-    filename: bind.conf
-    master: infoblox
-    path: /var/named/infoblox
-  nsd:
-    filename: nsd.conf
-    master: infoblox
-  knot:
+  - template: knot.conf
     filename: knot.conf
-    master: infoblox
-    template: infoblox
-    storage: /var/knot/infoblox
+    variables:
+      master_base: infoblox
+      template_id: infoblox
+      storage: /var/lib/knot/zones
+
+  - template: nsd.conf
+    filename: nsd.conf
+    variables:
+      storage_prefix: ""
+
+  - template: bind.conf
+    filename: bind.conf
+    variables:
+      master: infoblox
+      storage_prefix: /var/named/infoblox/

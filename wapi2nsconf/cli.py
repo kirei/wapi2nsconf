@@ -32,58 +32,24 @@ import argparse
 import logging
 import sys
 import warnings
-from dataclasses import dataclass
 from typing import List, Optional
 
 import jinja2
 import requests
 import urllib3
-import voluptuous as vol
-import voluptuous.humanize
 import yaml
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
+from .config import validate_config
+from .wapi import WAPI, InfobloxZone
+
 logger = logging.getLogger(__name__)
 
+PACKAGE_NAME = "wapi2nsconf"
 DEFAULT_CONF_FILENAME = "wapi2nsconf.yaml"
 DEFAULT_TEMPLATES_PATH = "templates/"
 DEFAULT_VIEW = "default"
-
-CONFIG_SCHEMA = vol.Schema(
-    {
-        vol.Required("wapi"): vol.Schema(
-            {
-                vol.Required("endpoint"): vol.FqdnUrl,
-                "version": float,
-                vol.Required("username"): str,
-                vol.Required("password"): str,
-                "ca_bundle": vol.IsFile,
-                vol.Required("check_hostname"): bool,
-            }
-        ),
-        "ipam": vol.Schema(
-            {
-                "view": str,
-                "ns_groups": [str],
-                "extattr_key": str,
-                "extattr_value": str,
-            }
-        ),
-        vol.Required("masters"): [
-            vol.Schema({vol.Required("ip"): vol.FqdnUrl, vol.Required("tsig"): str})
-        ],
-        vol.Required("output"): [
-            vol.Schema(
-                {
-                    vol.Required("template"): vol.IsFile,
-                    vol.Required("filename"): str,
-                    "variables": dict,
-                }
-            )
-        ],
-    }
-)
 
 
 class HostNameIgnoringAdapter(HTTPAdapter):
@@ -93,84 +59,6 @@ class HostNameIgnoringAdapter(HTTPAdapter):
         self.poolmanager = PoolManager(
             num_pools=connections, maxsize=maxsize, block=block, assert_hostname=False
         )
-
-
-@dataclass(frozen=True)
-class InfobloxZone(object):
-    fqdn: str
-    disabled: bool
-    extattrs: dict
-    ns_group: Optional[str] = None
-    description: Optional[str] = None
-
-    @classmethod
-    def from_wapi(cls, wzone: dict):
-        valid = False
-        if wzone["zone_format"] == "IPV4" or wzone["zone_format"] == "IPV6":
-            fqdn = wzone["display_domain"]
-            description = wzone["dns_fqdn"]
-            valid = True
-        elif wzone["zone_format"] == "FORWARD":
-            fqdn = wzone["dns_fqdn"]
-            description = wzone["display_domain"]
-            valid = True
-        else:
-            valid = False
-
-        if not valid:
-            logger.warning("Invalid zone: %s", wzone)
-            return None
-
-        return cls(
-            fqdn=fqdn,
-            ns_group=wzone.get("ns_group"),
-            disabled=wzone.get("disabled", False),
-            extattrs=wzone.get("extattrs", {}),
-            description=description,
-        )
-
-
-class WAPI(object):
-    """WAPI Client"""
-
-    def __init__(self, session: requests.Session, endpoint: str, version=None):
-        self.session = session
-        self.endpoint = endpoint
-        self.version = version
-
-    def zones(self, view: str) -> List[InfobloxZone]:
-        """Fetch all zones via WAPI"""
-
-        fields = [
-            "dns_fqdn",
-            "fqdn",
-            "disable",
-            "display_domain",
-            "zone_format",
-            "ns_group",
-        ]
-
-        if self.version is not None and self.version >= 1.2:
-            fields.append("extattrs")
-
-        params = {
-            "view": view,
-            "_return_fields": ",".join(fields),
-            "_return_type": "json",
-        }
-
-        logger.info("Fetching zones from %s", self.endpoint)
-        response = self.session.get(f"{self.endpoint}/zone_auth", params=params)
-
-        response.raise_for_status()
-
-        res = []
-        for wzone in response.json():
-            z = InfobloxZone.from_wapi(wzone)
-            if z:
-                res.append(z)
-
-        return sorted(res, key=lambda x: x.fqdn)
 
 
 def filter_zones(zones: List[InfobloxZone], conf: dict) -> List[InfobloxZone]:
@@ -217,9 +105,16 @@ def filter_zones(zones: List[InfobloxZone], conf: dict) -> List[InfobloxZone]:
     return res
 
 
-def output_nsconf(zones: List[InfobloxZone], conf: dict, templates_path: str) -> None:
+def output_nsconf(
+    zones: List[InfobloxZone], conf: dict, templates_path: Optional[str] = None
+) -> None:
 
-    loader = jinja2.FileSystemLoader(templates_path)
+    if templates_path is not None:
+        logger.debug("Using templates in %s", templates_path)
+        loader = jinja2.FileSystemLoader(templates_path)
+    else:
+        logger.debug("Using package templates")
+        loader = jinja2.PackageLoader(PACKAGE_NAME, "templates")
     env = jinja2.Environment(loader=loader)
 
     for output in conf.get("output", []):
@@ -256,7 +151,6 @@ def main():
     parser.add_argument(
         "--templates",
         dest="templates",
-        default=DEFAULT_TEMPLATES_PATH,
         metavar="path",
         help="Templates path",
         required=False,
@@ -287,7 +181,7 @@ def main():
         parser.print_help()
         sys.exit(0)
 
-    voluptuous.humanize.validate_with_humanized_errors(conf, CONFIG_SCHEMA)
+    validate_config()
     if args.check_config:
         sys.exit(0)
 
@@ -305,9 +199,9 @@ def main():
         version=wapi_conf.get("version"),
     )
 
-    wapi_zones = wapi.zones(view=ipam_conf.get("view", DEFAULT_VIEW))
-    zones = filter_zones(wapi_zones, ipam_conf)
-    output_nsconf(zones, conf, args.templates)
+    all_zones = wapi.zones(view=ipam_conf.get("view", DEFAULT_VIEW))
+    our_zones = filter_zones(zones=all_zones, conf=ipam_conf)
+    output_nsconf(zones=our_zones, conf=conf, templates_path=args.templates)
 
 
 if __name__ == "__main__":
