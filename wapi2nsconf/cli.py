@@ -61,6 +61,20 @@ class HostNameIgnoringAdapter(HTTPAdapter):
         )
 
 
+def get_session(conf: dict) -> requests.Session:
+    """Configure Session"""
+    session = requests.Session()
+    if conf.get("verify", True):
+        session.verify = conf.get("ca_bundle", True)
+    else:
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        session.verify = False
+    if not conf.get("check_hostname", True):
+        session.mount("https://", HostNameIgnoringAdapter())
+    session.auth = (conf["username"], conf["password"])
+    return session
+
+
 def filter_zones(zones: List[InfobloxZone], conf: dict) -> List[InfobloxZone]:
 
     res = []
@@ -188,11 +202,8 @@ def main():
     wapi_conf = conf["wapi"]
     ipam_conf = conf.get("ipam", {})
 
-    session = requests.Session()
-    session.verify = wapi_conf.get("ca_bundle")
-    if not wapi_conf.get("check_hostname", True):
-        session.mount("https://", HostNameIgnoringAdapter())
-    session.auth = (wapi_conf["username"], wapi_conf["password"])
+    session = get_session(wapi_conf)
+
     wapi = WAPI(
         session=session,
         endpoint=wapi_conf["endpoint"],
