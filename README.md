@@ -26,12 +26,12 @@ The configuration file is written in [YAML](https://yaml.org/). Example configur
 
 ### WAPI Connection
 
-   wapi:
-     endpoint: https://infoblox.example.com/wapi/v2.5
-     version: 2.5
-     username: username
-     password: password
-     check_hostname: True
+    wapi:
+      endpoint: https://infoblox.example.com/wapi/v2.5
+      version: 2.5
+      username: username
+      password: password
+      check_hostname: True
 
 ### IPAM Filters
 
