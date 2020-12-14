@@ -47,5 +47,5 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 
-def validate_config(conf: dict):
-    return voluptuous.humanize.validate_with_humanized_errors(conf, CONFIG_SCHEMA)
+def validate_config(conf: dict) -> None:
+    voluptuous.humanize.validate_with_humanized_errors(conf, CONFIG_SCHEMA)

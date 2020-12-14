@@ -130,6 +130,8 @@ def output_nsconf(
     zones: List[InfobloxZone], conf: dict, templates_path: Optional[str] = None
 ) -> None:
 
+    loader: jinja2.BaseLoader
+
     if templates_path is not None:
         logger.debug("Using templates in %s", templates_path)
         loader = jinja2.FileSystemLoader(templates_path)
@@ -151,7 +153,7 @@ def output_nsconf(
         logger.info("Output written to %s", output_filename)
 
 
-def main():
+def main() -> None:
     """Main function"""
 
     parser = argparse.ArgumentParser(description="wapi2nsconf")
