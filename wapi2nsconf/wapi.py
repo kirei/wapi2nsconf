@@ -18,7 +18,7 @@ class InfobloxZone(object):
     description: Optional[str] = None
 
     @classmethod
-    def from_wapi(cls, wzone: dict) -> Optional['InfobloxZone']:
+    def from_wapi(cls, wzone: dict) -> Optional["InfobloxZone"]:
         valid = False
         if wzone["zone_format"] == "IPV4" or wzone["zone_format"] == "IPV6":
             fqdn = wzone["display_domain"]
@@ -47,7 +47,9 @@ class InfobloxZone(object):
 class WAPI(object):
     """WAPI Client"""
 
-    def __init__(self, session: requests.Session, endpoint: str, version: Optional[float] = None):
+    def __init__(
+        self, session: requests.Session, endpoint: str, version: Optional[float] = None
+    ):
         self.session = session
         self.endpoint = endpoint
         self.version = version
