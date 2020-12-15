@@ -15,7 +15,7 @@ wapi2nsconf = "wapi2nsconf.cli:main"
 
 [tool.poetry.dependencies]
 Jinja2 = "^2.11.2"
-python = "^3.8"
+python = "^3.7"
 PyYAML = "^5.3.1"
 requests = "^2.25.0"
 urllib3 = "^1.26.2"
