@@ -7,7 +7,7 @@ import voluptuous.humanize
 from voluptuous.validators import DOMAIN_REGEX
 
 IP_ADDRESS = ipaddress.ip_address
-DOMAIN_NAME = vol.Any(vol.Match("\w+"), vol.Match(DOMAIN_REGEX))
+DOMAIN_NAME = vol.Any(vol.Match(r"\w+"), vol.Match(DOMAIN_REGEX))
 
 CONFIG_SCHEMA = vol.Schema(
     {
