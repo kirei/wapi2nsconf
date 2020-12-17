@@ -12,6 +12,9 @@ The following nameserver formats are supported:
 - [Knot DNS](https://www.knot-dns.cz/)
 
 
+Development of this software was sponsored by [AddPro AB](https://addpro.se/).
+
+
 ## Templates
 
 The following default configuration templates are provided:
