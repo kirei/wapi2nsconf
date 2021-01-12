@@ -5,7 +5,7 @@ profile = "black"
 
 [tool.poetry]
 name = "wapi2nsconf"
-version = "0.3.0"
+version = "0.3.1"
 description = "Infoblox WAPI to DNS server configuration tool"
 authors = ["Jakob Schlyter <jakob@kirei.se>"]
 license = "BSD"
