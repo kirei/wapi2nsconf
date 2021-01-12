@@ -31,6 +31,7 @@ The configuration file is written in [YAML](https://yaml.org/). Example configur
 
     wapi:
       endpoint: https://infoblox.example.com/wapi/v2.5
+      version: 2.5          # optional (guessed from endpoint URL)
       username: username
       password: password
       check_hostname: True  # default True
