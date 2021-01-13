@@ -1,6 +1,6 @@
 # Infoblox WAPI to Nameserver
 
-[![Build Status](https://travis-ci.com/kirei/wapi2nsconf.svg?branch=main)](https://travis-ci.com/kirei/wapi2nsconf)
+![Tests](https://github.com/kirei/wapi2nsconf/workflows/Tests/badge.svg)
 
 This program creates nameserver configuration files for secondary name servers
 based on configuration fetched via [Infoblox](https://www.infoblox.com/) WAPI.
