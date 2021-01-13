@@ -40,7 +40,7 @@ The configuration file is written in [YAML](https://yaml.org/). Example configur
 
 ### IPAM Filters
 
-The IPAM filters configures what view to use to find zones. Zones can also be filtered based on name server groups (`ns_groups`) and external attribute (key/value). There's a logic OR between `ns_groups` and `extattr_key`, so a zone is include if it is qualified by any of these options. If the `extattr_value` is configured, the `extattr_key` must have this value. If not specified any value of `extattr_key` is accepted.
+The IPAM filters configures what view to use to find zones. Zones can also be filtered based on name server groups (`ns_groups`) and external attribute (key/value). There's a logic OR between `ns_groups` and `extattr_key`, so a zone is include if it is qualified by any of these options. If the `extattr_value` is configured, the `extattr_key` must have this value. If not specified, any value of `extattr_key` is accepted.
 
     ipam:
       view: default
@@ -57,6 +57,8 @@ The IPAM filters configures what view to use to find zones. Zones can also be fi
         tsig: tsig.example.com
 
 ### Configuration File Output
+
+The `output` section defines what configuration files to output. Each output is created using a template, output file and an optionally set of variables (defined per template).
 
     output:
 
