@@ -56,7 +56,7 @@ DEFAULT_VIEW = "default"
 class HostNameIgnoringAdapter(HTTPAdapter):
     """Never check any hostnames"""
 
-    def init_poolmanager(self, connections, maxsize, block=False):
+    def init_poolmanager(self, connections, maxsize, block=False):  # type: ignore
         self.poolmanager = PoolManager(
             num_pools=connections, maxsize=maxsize, block=block, assert_hostname=False
         )
