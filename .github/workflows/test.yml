@@ -32,7 +32,6 @@ jobs:
     - name: Lint
       run: |
         poetry run pylama wapi2nsconf
-        poetry run mypy wapi2nsconf
     - name: Check formatting
       run: |
         poetry run isort --check wapi2nsconf
