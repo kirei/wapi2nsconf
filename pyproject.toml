@@ -5,7 +5,7 @@ profile = "black"
 
 [tool.poetry]
 name = "wapi2nsconf"
-version = "0.3.1"
+version = "0.4.0"
 description = "Infoblox WAPI to DNS server configuration tool"
 authors = ["Jakob Schlyter <jakob@kirei.se>"]
 license = "BSD"
@@ -14,7 +14,7 @@ license = "BSD"
 wapi2nsconf = "wapi2nsconf.cli:main"
 
 [tool.poetry.dependencies]
-Jinja2 = "^2.11.2"
+Jinja2 = "^3.0.3"
 python = "^3.7"
 PyYAML = "^5.3.1"
 requests = "^2.25.0"
