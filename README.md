@@ -15,6 +15,20 @@ The following nameserver formats are supported:
 Development of this software was sponsored by [AddPro AB](https://addpro.se/).
 
 
+## Installing
+
+This program is available via [PyPI](https://pypi.org/) and the latest version may be install using the following command:
+
+    pip install wapi2nsconf
+
+
+## Building
+
+This package uses [Poetry](https://python-poetry.org/) for packaging and dependency management. To build a wheel, use:
+
+    poetry build
+
+
 ## Templates
 
 The following default configuration templates are provided:
@@ -79,8 +93,3 @@ The `output` section defines what configuration files to output. Each output is 
         variables:
           master: infoblox
           storage_prefix: /var/named/infoblox/
-
-
-## Building
-
-This package uses [Poetry](https://python-poetry.org/) for packaging and dependency management. To build a wheel, use `poetry build`.
