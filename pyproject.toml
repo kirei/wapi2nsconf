@@ -14,11 +14,12 @@ readme = "README.md"
 
 [tool.poetry.scripts]
 wapi2nsconf = "wapi2nsconf.cli:main"
+wapi2catz = "wapi2nsconf.catz:main"
 
 [tool.poetry.dependencies]
 Jinja2 = "^3.0.3"
 python = "^3.7"
-PyYAML = "^5.3.1"
+PyYAML = "^6"
 requests = "^2.25.0"
 urllib3 = "^1.26.2"
 voluptuous = "^0.12.0"
