@@ -83,14 +83,12 @@ def guess_wapi_version(endpoint: str) -> Optional[float]:
 
 
 def filter_zones(zones: List[InfobloxZone], conf: dict) -> List[InfobloxZone]:
-
     res = []
     ns_groups = conf.get("ns_groups", None)
     extattr_key = conf.get("extattr_key")
     extattr_val = conf.get("extattr_value")
 
     for zone in zones:
-
         if zone.disabled:
             continue
 
@@ -129,7 +127,6 @@ def filter_zones(zones: List[InfobloxZone], conf: dict) -> List[InfobloxZone]:
 def output_nsconf(
     zones: List[InfobloxZone], conf: dict, templates_path: Optional[str] = None
 ) -> None:
-
     loader: jinja2.BaseLoader
 
     if templates_path is not None:
@@ -141,7 +138,6 @@ def output_nsconf(
     env = jinja2.Environment(loader=loader)
 
     for output in conf.get("output", []):
-
         template = env.get_template(
             output["template"], globals=output.get("variables", {})
         )
