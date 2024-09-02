@@ -84,7 +84,7 @@ def guess_wapi_version(endpoint: str) -> Optional[float]:
 
 def filter_zones(zones: List[InfobloxZone], conf: dict) -> List[InfobloxZone]:
     res = []
-    ns_groups = conf.get("ns_groups", None)
+    ns_groups = conf.get("ns_groups")
     extattr_key = conf.get("extattr_key")
     extattr_val = conf.get("extattr_value")
 
@@ -144,8 +144,8 @@ def output_nsconf(
         res = template.render(zones=zones, masters=conf.get("masters", []))
 
         output_filename = output["filename"]
-        with open(output_filename, "wt") as output_file:
-            output_file.write(res)
+        with open(output_filename, "w") as fp:
+            fp.write(res)
         logger.info("Output written to %s", output_filename)
 
 
@@ -195,7 +195,8 @@ def main() -> None:
         logging.getLogger("requests").setLevel(logging.INFO)
 
     try:
-        conf = yaml.safe_load(open(args.conf_filename, "rt"))
+        with open(args.conf_filename) as fp:
+            conf = yaml.safe_load(fp)
     except FileNotFoundError:
         parser.print_help()
         sys.exit(0)
