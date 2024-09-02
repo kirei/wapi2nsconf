@@ -1,7 +1,7 @@
 # PEP 518: https://www.python.org/dev/peps/pep-0518/
 [tool.poetry]
 name = "wapi2nsconf"
-version = "0.4.1"
+version = "0.4.2"
 description = "Infoblox WAPI to DNS server configuration tool"
 authors = ["Jakob Schlyter <jakob@kirei.se>"]
 license = "BSD"
