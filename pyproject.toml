@@ -1,11 +1,7 @@
 # PEP 518: https://www.python.org/dev/peps/pep-0518/
-
-[tool.isort]
-profile = "black"
-
 [tool.poetry]
 name = "wapi2nsconf"
-version = "0.4.1"
+version = "0.4.2"
 description = "Infoblox WAPI to DNS server configuration tool"
 authors = ["Jakob Schlyter <jakob@kirei.se>"]
 license = "BSD"
@@ -14,7 +10,7 @@ readme = "README.md"
 
 [tool.poetry.scripts]
 wapi2nsconf = "wapi2nsconf.cli:main"
-wapi2catz = "wapi2nsconf.catz:main"
+#wapi2catz = "wapi2nsconf.catz:main"
 
 [tool.poetry.dependencies]
 Jinja2 = "^3.0.3"
@@ -24,24 +20,13 @@ requests = "^2.25.0"
 urllib3 = "^1.26.2"
 voluptuous = "^0.12.0"
 
-[tool.poetry.dev-dependencies]
-black = "^22.3.0"
-isort = "^5.10.1"
-pylama = "^8.4.1"
+[tool.poetry.group.dev.dependencies]
 pytest = "^6.1.2"
-pytest-black = "^0.3.12"
-pytest-isort = "^1.2.0"
+ruff = "^0.6.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.pylama.linter.pycodestyle]
-max_line_length = 132
-ignore = "W606"
-
-[tool.pylama.linter.mccabe]
-complexity = 40
 
 [tool.mypy]
 ignore_missing_imports = true
@@ -57,3 +42,25 @@ warn_unused_ignores = true
 warn_unused_configs = true
 no_implicit_optional = true
 strict_optional = true
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]
+ignore = ["E501", "I001", "SIM102"]
+exclude = ["examples/*"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+split-on-trailing-comma = false

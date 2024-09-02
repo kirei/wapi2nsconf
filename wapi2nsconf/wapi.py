@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class InfobloxZone(object):
+class InfobloxZone:
     fqdn: str
     disabled: bool
     extattrs: dict
@@ -44,7 +44,7 @@ class InfobloxZone(object):
         )
 
 
-class WAPI(object):
+class WAPI:
     """WAPI Client"""
 
     def __init__(
