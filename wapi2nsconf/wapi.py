@@ -2,7 +2,6 @@
 
 import logging
 from dataclasses import dataclass
-from typing import List, Optional
 
 import requests
 
@@ -14,11 +13,11 @@ class InfobloxZone:
     fqdn: str
     disabled: bool
     extattrs: dict
-    ns_group: Optional[str] = None
-    description: Optional[str] = None
+    ns_group: str | None = None
+    description: str | None = None
 
     @classmethod
-    def from_wapi(cls, wzone: dict) -> Optional["InfobloxZone"]:
+    def from_wapi(cls, wzone: dict) -> "InfobloxZone" | None:
         valid = False
         if wzone["zone_format"] == "IPV4" or wzone["zone_format"] == "IPV6":
             fqdn = wzone["display_domain"]
@@ -48,13 +47,13 @@ class WAPI:
     """WAPI Client"""
 
     def __init__(
-        self, session: requests.Session, endpoint: str, version: Optional[float] = None
+        self, session: requests.Session, endpoint: str, version: float | None = None
     ):
         self.session = session
         self.endpoint = endpoint
         self.version = version
 
-    def zones(self, view: str) -> List[InfobloxZone]:
+    def zones(self, view: str) -> list[InfobloxZone]:
         """Fetch all zones via WAPI"""
 
         fields = [
