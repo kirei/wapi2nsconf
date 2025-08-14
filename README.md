@@ -24,9 +24,9 @@ This program is available via [PyPI](https://pypi.org/) and the latest version m
 
 ## Building
 
-This package uses [Poetry](https://python-poetry.org/) for packaging and dependency management. To build a wheel, use:
+This package uses [UV](https://docs.astral.sh/uv/) for packaging and dependency management. To build a wheel, use:
 
-    poetry build
+    uv build
 
 
 ## Templates
