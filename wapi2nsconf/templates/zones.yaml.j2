@@ -1,4 +1,5 @@
 zones:
 {% for zone in zones -%}
-  - name: {{ zone.fqdn }}
+- fqdn: {{ zone.fqdn }}
+  description: {{ zone.description }}
 {% endfor %}
