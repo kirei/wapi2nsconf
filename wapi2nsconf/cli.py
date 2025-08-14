@@ -33,7 +33,6 @@ import logging
 import re
 import sys
 import warnings
-from typing import List, Optional
 
 import jinja2
 import requests
@@ -76,13 +75,13 @@ def get_session(conf: dict) -> requests.Session:
     return session
 
 
-def guess_wapi_version(endpoint: str) -> Optional[float]:
+def guess_wapi_version(endpoint: str) -> float | None:
     """Guess WAPI version given endpoint URL"""
     match = re.match(r".+\/wapi\/v(\d+\.\d+)$", endpoint)
     return float(match.group(1)) if match else None
 
 
-def filter_zones(zones: List[InfobloxZone], conf: dict) -> List[InfobloxZone]:
+def filter_zones(zones: list[InfobloxZone], conf: dict) -> list[InfobloxZone]:
     res = []
     ns_groups = conf.get("ns_groups")
     extattr_key = conf.get("extattr_key")
@@ -125,7 +124,7 @@ def filter_zones(zones: List[InfobloxZone], conf: dict) -> List[InfobloxZone]:
 
 
 def output_nsconf(
-    zones: List[InfobloxZone], conf: dict, templates_path: Optional[str] = None
+    zones: list[InfobloxZone], conf: dict, templates_path: str | None = None
 ) -> None:
     loader: jinja2.BaseLoader
 
