@@ -1,32 +1,43 @@
 # PEP 518: https://www.python.org/dev/peps/pep-0518/
-[tool.poetry]
+
+[project]
 name = "wapi2nsconf"
-version = "0.4.2"
+dynamic = ["version"]
 description = "Infoblox WAPI to DNS server configuration tool"
-authors = ["Jakob Schlyter <jakob@kirei.se>"]
-license = "BSD"
-repository = "https://github.com/kirei/wapi2nsconf"
+authors = [{name="Jakob Schlyter", email = "jakob@kirei.se"}]
+license = "BSD-2-Clause"
 readme = "README.md"
+requires-python = ">=3.11,<4.0"
+dependencies = [
+    "Jinja2 >= 3.0.3",
+    "PyYAML >= 6",
+    "requests >= 2.25.0",
+    "urllib3 >= 1.26.2",
+    "voluptuous >= 0.12.0",
+]
 
-[tool.poetry.scripts]
+[project.urls]
+repository = "https://github.com/kirei/wapi2nsconf"
+
+[project.scripts]
 wapi2nsconf = "wapi2nsconf.cli:main"
-#wapi2catz = "wapi2nsconf.catz:main"
-
-[tool.poetry.dependencies]
-Jinja2 = "^3.0.3"
-python = "^3.7"
-PyYAML = "^6"
-requests = "^2.25.0"
-urllib3 = "^1.26.2"
-voluptuous = "^0.12.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^6.1.2"
-ruff = "^0.6.3"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling", "uv-dynamic-versioning"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.uv-dynamic-versioning]
+pattern = '(?P<base>\d+\.\d+\.\d+)'
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-ruff>=0.4.1",
+    "ruff>=0.11.0",
+]
 
 [tool.mypy]
 ignore_missing_imports = true
