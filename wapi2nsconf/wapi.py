@@ -2,6 +2,7 @@
 
 import logging
 from dataclasses import dataclass
+from typing import Self
 
 import requests
 
@@ -17,7 +18,7 @@ class InfobloxZone:
     description: str | None = None
 
     @classmethod
-    def from_wapi(cls, wzone: dict) -> "InfobloxZone" | None:
+    def from_wapi(cls, wzone: dict) -> Self | None:
         valid = False
         if wzone["zone_format"] == "IPV4" or wzone["zone_format"] == "IPV6":
             fqdn = wzone["display_domain"]
