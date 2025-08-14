@@ -1,0 +1,4 @@
+zones:
+{% for zone in zones -%}
+  - name: {{ zone.fqdn }}
+{% endfor %}
