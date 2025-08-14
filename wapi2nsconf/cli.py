@@ -42,6 +42,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
 from .config import validate_config
+from .utils import function_to_json
 from .wapi import WAPI, InfobloxZone
 
 logger = logging.getLogger(__name__)
@@ -134,7 +135,9 @@ def output_nsconf(
     else:
         logger.debug("Using package templates")
         loader = jinja2.PackageLoader(PACKAGE_NAME, "templates")
+
     env = jinja2.Environment(loader=loader)
+    env.filters["to_json"] = function_to_json
 
     for output in conf.get("output", []):
         template = env.get_template(

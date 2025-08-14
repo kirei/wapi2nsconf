@@ -36,6 +36,8 @@ The following default configuration templates are provided:
 - bind.conf
 - knot.conf
 - nsd.conf
+- zones.yaml.j2
+- zones.json.j2
 
 ## Configuration
 
