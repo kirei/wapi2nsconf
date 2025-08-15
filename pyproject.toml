@@ -29,9 +29,6 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 source = "uv-dynamic-versioning"
 
-[tool.uv-dynamic-versioning]
-pattern = '(?P<base>\d+\.\d+\.\d+)'
-
 [dependency-groups]
 dev = [
     "pytest>=8.3.5",
