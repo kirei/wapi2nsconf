@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass
 from typing import Self
 
-import requests
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class WAPI:
     """WAPI Client"""
 
     def __init__(
-        self, session: requests.Session, endpoint: str, version: float | None = None
+        self, session: httpx.Client, endpoint: str, version: float | None = None
     ):
         self.session = session
         self.endpoint = endpoint
