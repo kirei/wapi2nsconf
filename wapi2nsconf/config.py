@@ -20,6 +20,7 @@ CONFIG_SCHEMA = vol.Schema(
                 "ca_bundle": vol.IsFile,
                 "check_hostname": bool,
                 "verify": bool,
+                "max_results": vol.All(vol.Coerce(int), vol.Range(min=1, max=10000)),
             }
         ),
         "ipam": vol.Schema(

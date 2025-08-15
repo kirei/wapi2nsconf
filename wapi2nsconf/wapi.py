@@ -8,6 +8,8 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
+MAX_RESULTS = 1000
+
 
 @dataclass(frozen=True)
 class InfobloxZone:
@@ -48,11 +50,16 @@ class WAPI:
     """WAPI Client"""
 
     def __init__(
-        self, session: httpx.Client, endpoint: str, version: float | None = None
+        self,
+        session: httpx.Client,
+        endpoint: str,
+        version: float | None = None,
+        max_results: int = MAX_RESULTS,
     ):
         self.session = session
         self.endpoint = endpoint
         self.version = version
+        self.max_results = max_results
 
     def zones(self, view: str) -> list[InfobloxZone]:
         """Fetch all zones via WAPI"""
@@ -73,17 +80,34 @@ class WAPI:
             "view": view,
             "_return_fields": ",".join(fields),
             "_return_type": "json",
+            "_return_as_object": 1,
+            "_paging": "1",
+            "_max_results": self.max_results,
         }
 
         logger.info("Fetching zones from %s", self.endpoint)
-        response = self.session.get(f"{self.endpoint}/zone_auth", params=params)
+        zones = []
+        page_no = 0
 
-        response.raise_for_status()
+        while True:
+            response = self.session.get(f"{self.endpoint}/zone_auth", params=params)
+            response.raise_for_status()
 
-        res = []
-        for wzone in response.json():
-            z = InfobloxZone.from_wapi(wzone)
-            if z:
-                res.append(z)
+            res = response.json()
+            page_no += 1
 
-        return sorted(res, key=lambda x: x.fqdn)
+            logger.debug("Received %d zones in page %d", len(res["result"]), page_no)
+
+            for wzone in res["result"]:
+                z = InfobloxZone.from_wapi(wzone)
+                if z:
+                    zones.append(z)
+
+            if not (next_page_id := res.get("next_page_id")):
+                break
+
+            params["_page_id"] = next_page_id
+
+        logger.debug("Received a total of %d zones", len(zones))
+
+        return sorted(zones, key=lambda x: x.fqdn)

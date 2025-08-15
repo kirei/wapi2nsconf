@@ -207,11 +207,14 @@ def main() -> None:
 
     wapi_session = get_httpx_client(wapi_conf)
     wapi_endpoint = wapi_conf["endpoint"]
+    wapi_max_results = wapi_conf.get("max_results", 1000)
     wapi_version = wapi_conf.get("version", guess_wapi_version(wapi_endpoint))
+
     wapi = WAPI(
         session=wapi_session,
         endpoint=wapi_endpoint,
         version=wapi_version,
+        max_results=wapi_max_results,
     )
 
     all_zones = wapi.zones(view=ipam_conf.get("view", DEFAULT_VIEW))
