@@ -31,15 +31,12 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import argparse
 import logging
 import re
+import ssl
 import sys
-import warnings
 
+import httpx
 import jinja2
-import requests
-import urllib3
 import yaml
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.poolmanager import PoolManager
 
 from .config import validate_config
 from .utils import function_to_json
@@ -53,27 +50,30 @@ DEFAULT_TEMPLATES_PATH = "templates/"
 DEFAULT_VIEW = "default"
 
 
-class HostNameIgnoringAdapter(HTTPAdapter):
-    """Never check any hostnames"""
+def get_httpx_client(conf: dict) -> httpx.Client:
+    """Create HTTPX client based on configuration"""
 
-    def init_poolmanager(self, connections, maxsize, block=False):  # type: ignore
-        self.poolmanager = PoolManager(
-            num_pools=connections, maxsize=maxsize, block=block, assert_hostname=False
-        )
+    kwargs = {}
 
-
-def get_session(conf: dict) -> requests.Session:
-    """Configure Session"""
-    session = requests.Session()
-    if conf.get("verify", True):
-        session.verify = conf.get("ca_bundle", True)
+    if not conf.get("verify", True):
+        kwargs["verify"] = False
     else:
-        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-        session.verify = False
-    if not conf.get("check_hostname", True):
-        session.mount("https://", HostNameIgnoringAdapter())
-    session.auth = (conf["username"], conf["password"])
-    return session
+        if ca_bundle := conf.get("ca_bundle"):
+            ctx = ssl.create_default_context(cafile=ca_bundle)
+        else:
+            ctx = ssl.create_default_context()
+
+        if not conf.get("check_hostname", True):
+            ctx.check_hostname = False
+
+        kwargs["verify"] = ctx
+
+    if username := conf.get("username"):
+        password = conf.get("password")
+        auth = httpx.BasicAuth(username=username, password=password)
+        kwargs["auth"] = auth
+
+    return httpx.Client(**kwargs)
 
 
 def guess_wapi_version(endpoint: str) -> float | None:
@@ -187,14 +187,9 @@ def main() -> None:
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     elif args.silent:
-        warnings.filterwarnings(
-            "ignore", category=urllib3.exceptions.SubjectAltNameWarning
-        )
         logging.basicConfig(level=logging.WARNING)
-        logging.getLogger("requests").setLevel(logging.WARNING)
     else:
         logging.basicConfig(level=logging.INFO)
-        logging.getLogger("requests").setLevel(logging.INFO)
 
     try:
         with open(args.conf_filename) as fp:
@@ -210,7 +205,7 @@ def main() -> None:
     wapi_conf = conf["wapi"]
     ipam_conf = conf.get("ipam", {})
 
-    wapi_session = get_session(wapi_conf)
+    wapi_session = get_httpx_client(wapi_conf)
     wapi_endpoint = wapi_conf["endpoint"]
     wapi_version = wapi_conf.get("version", guess_wapi_version(wapi_endpoint))
     wapi = WAPI(
