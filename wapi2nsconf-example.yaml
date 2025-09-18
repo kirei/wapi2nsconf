@@ -4,6 +4,7 @@ wapi:
   username: username
   password: password
   check_hostname: True
+  timeout: 60
 
 ipam:
   view: default
