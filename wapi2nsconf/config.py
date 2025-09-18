@@ -23,7 +23,7 @@ CONFIG_SCHEMA = vol.Schema(
                 "max_results": vol.All(vol.Coerce(int), vol.Range(min=1, max=10000)),
             }
         ),
-        "ipam": vol.Schema(
+        vol.Required("ipam"): vol.Schema(
             {
                 "view": str,
                 "ns_groups": [str],
@@ -31,7 +31,7 @@ CONFIG_SCHEMA = vol.Schema(
                 "extattr_value": str,
             }
         ),
-        vol.Required("masters"): [
+        vol.Optional("masters"): [
             vol.Schema(
                 {vol.Required("ip"): IP_ADDRESS, vol.Required("tsig"): DOMAIN_NAME}
             )
