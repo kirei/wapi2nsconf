@@ -73,6 +73,9 @@ def get_httpx_client(conf: dict) -> httpx.Client:
         auth = httpx.BasicAuth(username=username, password=password)
         kwargs["auth"] = auth
 
+    if timeout := conf.get("timeout"):
+        kwargs["timeout"] = timeout
+
     return httpx.Client(**kwargs)
 
 
