@@ -220,8 +220,15 @@ def main() -> None:
         max_results=wapi_max_results,
     )
 
-    all_zones = wapi.zones(view=ipam_conf.get("view", DEFAULT_VIEW))
+    views = ipam_conf.get("views", [ipam_conf.get("view", DEFAULT_VIEW)])
+
+    all_zones = []
+    for view in views:
+        logger.debug("Fetching zones for view %s", view)
+        all_zones.extend(wapi.zones(view=view))
+
     our_zones = filter_zones(zones=all_zones, conf=ipam_conf)
+
     output_nsconf(zones=our_zones, conf=conf, templates_path=args.templates)
 
 
