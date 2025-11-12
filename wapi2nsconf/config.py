@@ -25,7 +25,8 @@ class WapiConfiguration(BaseModel):
 
         if self.version:
             return self.version
-        match = re.match(r".+\/wapi\/v(\d+\.\d+)$", str(self.endpoint))
+        endpoint = str(self.endpoint).rstrip("/")
+        match = re.search(r"/wapi/v(\d+(?:\.\d+)?)$", endpoint)
         return float(match.group(1)) if match else None
 
     def get_httpx_client(self) -> httpx.Client:
