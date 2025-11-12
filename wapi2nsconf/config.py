@@ -37,11 +37,7 @@ class WapiConfiguration(BaseModel):
         if not self.verify:
             kwargs["verify"] = False
         else:
-            ctx = (
-                ssl.create_default_context(cafile=self.ca_bundle)
-                if self.ca_bundle
-                else ssl.create_default_context()
-            )
+            ctx = ssl.create_default_context(cafile=self.ca_bundle) if self.ca_bundle else ssl.create_default_context()
 
             if not self.check_hostname:
                 ctx.check_hostname = False
@@ -50,12 +46,8 @@ class WapiConfiguration(BaseModel):
 
         if self.username or self.password:
             if not self.username or not self.password:
-                raise ValueError(
-                    "Both username and password must be provided for basic auth."
-                )
-            kwargs["auth"] = httpx.BasicAuth(
-                username=self.username, password=self.password
-            )
+                raise ValueError("Both username and password must be provided for basic auth.")
+            kwargs["auth"] = httpx.BasicAuth(username=self.username, password=self.password)
 
         kwargs["timeout"] = self.timeout
 

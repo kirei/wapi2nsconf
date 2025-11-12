@@ -50,6 +50,9 @@ warn_unused_configs = true
 no_implicit_optional = true
 strict_optional = true
 
+[tool.ruff]
+line-length = 132
+
 [tool.ruff.lint]
 select = [
     # pycodestyle

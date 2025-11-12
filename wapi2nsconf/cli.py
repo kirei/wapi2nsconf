@@ -46,9 +46,7 @@ DEFAULT_CONF_FILENAME = "wapi2nsconf.yaml"
 DEFAULT_TEMPLATES_PATH = "templates/"
 
 
-def filter_zones(
-    zones: list[InfobloxZone], ipam_conf: IpamConfiguration
-) -> list[InfobloxZone]:
+def filter_zones(zones: list[InfobloxZone], ipam_conf: IpamConfiguration) -> list[InfobloxZone]:
     res = []
 
     for zone in zones:
@@ -67,15 +65,11 @@ def filter_zones(
             zone_val = zone.extattrs.get(ipam_conf.extattr_key, {}).get("value")
             if ipam_conf.extattr_value is not None:
                 if zone_val == ipam_conf.extattr_value:
-                    logger.debug(
-                        "%s included by extended attribute key/value", zone.fqdn
-                    )
+                    logger.debug("%s included by extended attribute key/value", zone.fqdn)
                     res.append(zone)
                     continue
                 else:
-                    logger.debug(
-                        "%s skipped by extended attribute key/value", zone.fqdn
-                    )
+                    logger.debug("%s skipped by extended attribute key/value", zone.fqdn)
                     continue
             elif zone.extattrs.get(ipam_conf.extattr_key, None) is not None:
                 logger.debug("%s included by extended attribute key", zone.fqdn)
@@ -106,9 +100,7 @@ def output_nsconf(
 
     for output in conf.output:
         template = env.get_template(output.template, globals=output.variables)
-        masters = [
-            {"ip": str(master.ip), "tsig": master.tsig} for master in conf.masters
-        ]
+        masters = [{"ip": str(master.ip), "tsig": master.tsig} for master in conf.masters]
         res = template.render(zones=zones, masters=masters)
 
         output_filename = output.filename
@@ -142,12 +134,8 @@ def main() -> None:
         help="Templates path",
         required=False,
     )
-    parser.add_argument(
-        "--debug", dest="debug", action="store_true", help="Print debug information"
-    )
-    parser.add_argument(
-        "--silent", dest="silent", action="store_true", help="Silent operation"
-    )
+    parser.add_argument("--debug", dest="debug", action="store_true", help="Print debug information")
+    parser.add_argument("--silent", dest="silent", action="store_true", help="Silent operation")
     args = parser.parse_args()
 
     if args.debug:
