@@ -2,7 +2,7 @@
 
 import logging
 from dataclasses import dataclass
-from typing import Self
+from typing import Any, Self
 
 import httpx
 
@@ -16,11 +16,12 @@ class InfobloxZone:
     fqdn: str
     disabled: bool
     extattrs: dict
+    view: str
     ns_group: str | None = None
     description: str | None = None
 
     @classmethod
-    def from_wapi(cls, wzone: dict) -> Self | None:
+    def from_wapi(cls, wzone: dict[str, Any], view: str) -> Self | None:
         valid = False
         if wzone["zone_format"] == "IPV4" or wzone["zone_format"] == "IPV6":
             fqdn = wzone["display_domain"]
@@ -43,6 +44,7 @@ class InfobloxZone:
             disabled=wzone.get("disabled", False),
             extattrs=wzone.get("extattrs", {}),
             description=description,
+            view=view,
         )
 
 
@@ -99,7 +101,7 @@ class WAPI:
             logger.debug("Received %d zones in page %d", len(res["result"]), page_no)
 
             for wzone in res["result"]:
-                z = InfobloxZone.from_wapi(wzone)
+                z = InfobloxZone.from_wapi(wzone=wzone, view=view)
                 if z:
                     zones.append(z)
 
