@@ -12,8 +12,8 @@ from pydantic.networks import IPvAnyAddress
 class WapiConfiguration(BaseModel):
     endpoint: AnyHttpUrl
     version: float | None = Field(default=None)
-    username: str
-    password: str
+    username: str | None = Field(default=None)
+    password: str | None = Field(default=None)
     ca_bundle: FilePath | None = Field(default=None)
     check_hostname: bool = Field(default=True)
     verify: bool = Field(default=True)
