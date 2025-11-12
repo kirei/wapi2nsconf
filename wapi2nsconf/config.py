@@ -18,7 +18,7 @@ class WapiConfiguration(BaseModel):
     check_hostname: bool = Field(default=True)
     verify: bool = Field(default=True)
     timeout: int = Field(default=300)
-    max_results: int = Field(default=1000, ge=0, le=100000)
+    max_results: int = Field(default=1000, ge=1, le=100000)
 
     def get_wapi_version(self) -> float | None:
         """Get WAPI configuration"""
