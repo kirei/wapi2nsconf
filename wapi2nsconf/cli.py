@@ -30,15 +30,12 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
 import logging
-import re
-import ssl
 import sys
 
-import httpx
 import jinja2
 import yaml
 
-from .config import validate_config
+from .config import Configuration, IpamConfiguration
 from .utils import function_to_json
 from .wapi import WAPI, InfobloxZone
 
@@ -47,77 +44,34 @@ logger = logging.getLogger(__name__)
 PACKAGE_NAME = "wapi2nsconf"
 DEFAULT_CONF_FILENAME = "wapi2nsconf.yaml"
 DEFAULT_TEMPLATES_PATH = "templates/"
-DEFAULT_VIEW = "default"
 
 
-def get_httpx_client(conf: dict) -> httpx.Client:
-    """Create HTTPX client based on configuration"""
-
-    kwargs = {}
-
-    if not conf.get("verify", True):
-        kwargs["verify"] = False
-    else:
-        if ca_bundle := conf.get("ca_bundle"):
-            ctx = ssl.create_default_context(cafile=ca_bundle)
-        else:
-            ctx = ssl.create_default_context()
-
-        if not conf.get("check_hostname", True):
-            ctx.check_hostname = False
-
-        kwargs["verify"] = ctx
-
-    if username := conf.get("username"):
-        password = conf.get("password")
-        auth = httpx.BasicAuth(username=username, password=password)
-        kwargs["auth"] = auth
-
-    if timeout := conf.get("timeout"):
-        kwargs["timeout"] = timeout
-
-    return httpx.Client(**kwargs)
-
-
-def guess_wapi_version(endpoint: str) -> float | None:
-    """Guess WAPI version given endpoint URL"""
-    match = re.match(r".+\/wapi\/v(\d+\.\d+)$", endpoint)
-    return float(match.group(1)) if match else None
-
-
-def filter_zones(zones: list[InfobloxZone], conf: dict) -> list[InfobloxZone]:
+def filter_zones(zones: list[InfobloxZone], ipam_conf: IpamConfiguration) -> list[InfobloxZone]:
     res = []
-    ns_groups = conf.get("ns_groups")
-    extattr_key = conf.get("extattr_key")
-    extattr_val = conf.get("extattr_value")
 
     for zone in zones:
         if zone.disabled:
             continue
 
-        if ns_groups is None:
+        if ipam_conf.ns_groups is None:
             logger.debug("%s included by default", zone.fqdn)
             res.append(zone)
             continue
-        elif zone.ns_group in ns_groups:
+        elif zone.ns_group in ipam_conf.ns_groups:
             logger.debug("%s included by ns_group", zone.fqdn)
             res.append(zone)
             continue
-        elif extattr_key is not None:
-            zone_val = zone.extattrs.get(extattr_key, {}).get("value")
-            if extattr_val is not None:
-                if zone_val == extattr_val:
-                    logger.debug(
-                        "%s included by extended attribute key/value", zone.fqdn
-                    )
+        elif ipam_conf.extattr_key is not None:
+            zone_val = zone.extattrs.get(ipam_conf.extattr_key, {}).get("value")
+            if ipam_conf.extattr_value is not None:
+                if zone_val == ipam_conf.extattr_value:
+                    logger.debug("%s included by extended attribute key/value", zone.fqdn)
                     res.append(zone)
                     continue
                 else:
-                    logger.debug(
-                        "%s skipped by extended attribute key/value", zone.fqdn
-                    )
+                    logger.debug("%s skipped by extended attribute key/value", zone.fqdn)
                     continue
-            elif zone.extattrs.get(extattr_key, None) is not None:
+            elif zone.extattrs.get(ipam_conf.extattr_key, None) is not None:
                 logger.debug("%s included by extended attribute key", zone.fqdn)
                 res.append(zone)
                 continue
@@ -128,7 +82,9 @@ def filter_zones(zones: list[InfobloxZone], conf: dict) -> list[InfobloxZone]:
 
 
 def output_nsconf(
-    zones: list[InfobloxZone], conf: dict, templates_path: str | None = None
+    zones: list[InfobloxZone],
+    conf: Configuration,
+    templates_path: str | None = None,
 ) -> None:
     loader: jinja2.BaseLoader
 
@@ -142,13 +98,12 @@ def output_nsconf(
     env = jinja2.Environment(loader=loader)
     env.filters["to_json"] = function_to_json
 
-    for output in conf.get("output", []):
-        template = env.get_template(
-            output["template"], globals=output.get("variables", {})
-        )
-        res = template.render(zones=zones, masters=conf.get("masters", []))
+    for output in conf.output:
+        template = env.get_template(output.template, globals=output.variables)
+        masters = [{"ip": str(master.ip), "tsig": master.tsig} for master in conf.masters]
+        res = template.render(zones=zones, masters=masters)
 
-        output_filename = output["filename"]
+        output_filename = output.filename
         with open(output_filename, "w") as fp:
             fp.write(res)
         logger.info("Output written to %s", output_filename)
@@ -179,12 +134,8 @@ def main() -> None:
         help="Templates path",
         required=False,
     )
-    parser.add_argument(
-        "--debug", dest="debug", action="store_true", help="Print debug information"
-    )
-    parser.add_argument(
-        "--silent", dest="silent", action="store_true", help="Silent operation"
-    )
+    parser.add_argument("--debug", dest="debug", action="store_true", help="Print debug information")
+    parser.add_argument("--silent", dest="silent", action="store_true", help="Silent operation")
     args = parser.parse_args()
 
     if args.debug:
@@ -196,38 +147,29 @@ def main() -> None:
 
     try:
         with open(args.conf_filename) as fp:
-            conf = yaml.safe_load(fp)
+            conf = Configuration.model_validate(yaml.safe_load(fp))
     except FileNotFoundError:
         parser.print_help()
         sys.exit(0)
 
-    validate_config(conf)
     if args.check_config:
         sys.exit(0)
 
-    wapi_conf = conf["wapi"]
-    ipam_conf = conf.get("ipam", {})
-
-    wapi_session = get_httpx_client(wapi_conf)
-    wapi_endpoint = wapi_conf["endpoint"]
-    wapi_max_results = wapi_conf.get("max_results", 1000)
-    wapi_version = wapi_conf.get("version", guess_wapi_version(wapi_endpoint))
-
     wapi = WAPI(
-        session=wapi_session,
-        endpoint=wapi_endpoint,
-        version=wapi_version,
-        max_results=wapi_max_results,
+        session=conf.wapi.get_httpx_client(),
+        endpoint=str(conf.wapi.endpoint),
+        version=conf.wapi.get_wapi_version(),
+        max_results=conf.wapi.max_results,
     )
 
-    views = ipam_conf.get("views", [ipam_conf.get("view", DEFAULT_VIEW)])
+    views = conf.ipam.views or [conf.ipam.view]
 
-    all_zones = []
+    all_zones: list[InfobloxZone] = []
     for view in views:
         logger.debug("Fetching zones for view %s", view)
         all_zones.extend(wapi.zones(view=view))
 
-    our_zones = filter_zones(zones=all_zones, conf=ipam_conf)
+    our_zones = filter_zones(zones=all_zones, ipam_conf=conf.ipam)
 
     output_nsconf(zones=our_zones, conf=conf, templates_path=args.templates)
 

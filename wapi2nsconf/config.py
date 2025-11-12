@@ -1,55 +1,80 @@
 """Configuration schema"""
 
-import ipaddress
+import re
+import ssl
+from typing import Any
 
-import voluptuous as vol
-import voluptuous.humanize
-from voluptuous.validators import DOMAIN_REGEX
-
-IP_ADDRESS = ipaddress.ip_address
-DOMAIN_NAME = vol.Any(vol.Match(r"\w+"), vol.Match(DOMAIN_REGEX))
-
-CONFIG_SCHEMA = vol.Schema(
-    {
-        vol.Required("wapi"): vol.Schema(
-            {
-                vol.Required("endpoint"): vol.FqdnUrl,
-                "version": float,
-                vol.Required("username"): str,
-                vol.Required("password"): str,
-                "ca_bundle": vol.IsFile,
-                "check_hostname": bool,
-                "verify": bool,
-                vol.Optional("timeout"): int,
-                "max_results": vol.All(vol.Coerce(int), vol.Range(min=1, max=10000)),
-            }
-        ),
-        vol.Required("ipam"): vol.Schema(
-            {
-                "view": str,
-                "views": [str],
-                "ns_groups": [str],
-                "extattr_key": str,
-                "extattr_value": str,
-            }
-        ),
-        vol.Optional("masters"): [
-            vol.Schema(
-                {vol.Required("ip"): IP_ADDRESS, vol.Required("tsig"): DOMAIN_NAME}
-            )
-        ],
-        vol.Required("output"): [
-            vol.Schema(
-                {
-                    vol.Required("template"): vol.IsFile,
-                    vol.Required("filename"): str,
-                    "variables": dict,
-                }
-            )
-        ],
-    }
-)
+import httpx
+from pydantic import AnyHttpUrl, BaseModel, Field, FilePath
+from pydantic.networks import IPvAnyAddress
 
 
-def validate_config(conf: dict) -> None:
-    voluptuous.humanize.validate_with_humanized_errors(conf, CONFIG_SCHEMA)
+class WapiConfiguration(BaseModel):
+    endpoint: AnyHttpUrl
+    version: float | None = Field(default=None)
+    username: str | None = Field(default=None)
+    password: str | None = Field(default=None)
+    ca_bundle: FilePath | None = Field(default=None)
+    check_hostname: bool = Field(default=True)
+    verify: bool = Field(default=True)
+    timeout: int = Field(default=300)
+    max_results: int = Field(default=1000, ge=1, le=100000)
+
+    def get_wapi_version(self) -> float | None:
+        """Get WAPI configuration"""
+
+        if self.version:
+            return self.version
+        endpoint = str(self.endpoint).rstrip("/")
+        match = re.search(r"/wapi/v(\d+(?:\.\d+)?)$", endpoint)
+        return float(match.group(1)) if match else None
+
+    def get_httpx_client(self) -> httpx.Client:
+        """Create HTTPX client from configuration"""
+
+        kwargs: dict[str, Any] = {}
+
+        if not self.verify:
+            kwargs["verify"] = False
+        else:
+            ctx = ssl.create_default_context(cafile=self.ca_bundle) if self.ca_bundle else ssl.create_default_context()
+
+            if not self.check_hostname:
+                ctx.check_hostname = False
+
+            kwargs["verify"] = ctx
+
+        if self.username or self.password:
+            if not self.username or not self.password:
+                raise ValueError("Both username and password must be provided for basic auth.")
+            kwargs["auth"] = httpx.BasicAuth(username=self.username, password=self.password)
+
+        kwargs["timeout"] = httpx.Timeout(timeout=self.timeout)
+
+        return httpx.Client(**kwargs)
+
+
+class IpamConfiguration(BaseModel):
+    view: str = Field(default="default")
+    views: list[str] | None = Field(default=None)
+    ns_groups: list[str] | None = Field(default=None)
+    extattr_key: str | None = Field(default=None)
+    extattr_value: str | None = Field(default=None)
+
+
+class MasterConfiguration(BaseModel):
+    ip: IPvAnyAddress
+    tsig: str
+
+
+class OutputConfiguration(BaseModel):
+    template: str
+    filename: str
+    variables: dict[str, Any] = Field(default={})
+
+
+class Configuration(BaseModel):
+    wapi: WapiConfiguration
+    ipam: IpamConfiguration
+    masters: list[MasterConfiguration] = Field(default=[])
+    output: list[OutputConfiguration] = Field(default=[])
