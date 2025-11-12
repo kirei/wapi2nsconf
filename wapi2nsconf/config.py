@@ -49,7 +49,7 @@ class WapiConfiguration(BaseModel):
                 raise ValueError("Both username and password must be provided for basic auth.")
             kwargs["auth"] = httpx.BasicAuth(username=self.username, password=self.password)
 
-        kwargs["timeout"] = self.timeout
+        kwargs["timeout"] = httpx.Timeout(timeout=self.timeout)
 
         return httpx.Client(**kwargs)
 
