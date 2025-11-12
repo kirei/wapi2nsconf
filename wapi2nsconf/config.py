@@ -71,7 +71,7 @@ class MasterConfiguration(BaseModel):
 
 
 class OutputConfiguration(BaseModel):
-    template: str | None = Field(default=None)
+    template: str
     filename: str
     variables: dict[str, Any] = Field(default={})
 
