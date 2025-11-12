@@ -88,7 +88,7 @@ class WAPI:
         }
 
         logger.info("Fetching zones from %s", self.endpoint)
-        zones = []
+        zones: list[InfobloxZone] = []
         page_no = 0
 
         while True:
