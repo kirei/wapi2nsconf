@@ -48,7 +48,11 @@ class WapiConfiguration(BaseModel):
 
             kwargs["verify"] = ctx
 
-        if self.username:
+        if self.username or self.password:
+            if not self.username or not self.password:
+                raise ValueError(
+                    "Both username and password must be provided for basic auth."
+                )
             kwargs["auth"] = httpx.BasicAuth(
                 username=self.username, password=self.password
             )
