@@ -27,6 +27,7 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Required("ipam"): vol.Schema(
             {
                 "view": str,
+                "views": list[str],
                 "ns_groups": [str],
                 "extattr_key": str,
                 "extattr_value": str,
