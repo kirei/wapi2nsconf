@@ -1,9 +1,6 @@
 # Infoblox WAPI to Nameserver
 
-![Tests](https://github.com/kirei/wapi2nsconf/workflows/Tests/badge.svg)
-
-This program creates nameserver configuration files for secondary name servers
-based on configuration fetched via [Infoblox](https://www.infoblox.com/) WAPI.
+This program creates nameserver configuration files for secondary name servers based on configuration fetched via [Infoblox](https://www.infoblox.com/) WAPI.
 
 The following nameserver formats are supported:
 
