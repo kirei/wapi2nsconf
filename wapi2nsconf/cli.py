@@ -35,6 +35,7 @@ import sys
 import jinja2
 import yaml
 
+from . import __version__
 from .config import Configuration, IpamConfiguration
 from .utils import function_to_json
 from .wapi import WAPI, InfobloxZone
@@ -112,7 +113,7 @@ def output_nsconf(
 def main() -> None:
     """Main function"""
 
-    parser = argparse.ArgumentParser(description="wapi2nsconf")
+    parser = argparse.ArgumentParser(description=f"wapi2nsconf version {__version__}")
     parser.add_argument(
         "--conf",
         dest="conf_filename",
