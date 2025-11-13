@@ -76,7 +76,9 @@ class IpamConfiguration(BaseModel):
 
     def get_views(self) -> list[str]:
         """Return list of requested views"""
-        return self.views or [self.view or "default"]
+        if self.views is not None:
+            return self.views
+        return [self.view or "default"]
 
 
 class MasterConfiguration(BaseModel):
