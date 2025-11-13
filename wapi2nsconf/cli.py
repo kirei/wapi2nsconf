@@ -34,6 +34,7 @@ import sys
 
 import jinja2
 import yaml
+from pydantic import ValidationError
 
 from . import __version__
 from .config import Configuration, IpamConfiguration
@@ -157,7 +158,7 @@ def main() -> None:
     except FileNotFoundError:
         parser.print_help()
         sys.exit(1)
-    except Exception as exc:
+    except ValidationError as exc:
         print(exc)
         sys.exit(1)
 
