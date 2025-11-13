@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Build nameserver configurations using Infoblox WAPI
 
@@ -31,6 +29,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import argparse
 import logging
 import sys
+from pathlib import Path
 
 import jinja2
 import yaml
@@ -86,7 +85,7 @@ def filter_zones(zones: list[InfobloxZone], ipam_conf: IpamConfiguration) -> lis
 def output_nsconf(
     zones: list[InfobloxZone],
     conf: Configuration,
-    templates_path: str | None = None,
+    templates_path: Path | None = None,
 ) -> None:
     loader: jinja2.BaseLoader
 
@@ -134,6 +133,7 @@ def main() -> None:
         dest="templates",
         metavar="path",
         help="Templates path",
+        type=Path,
         required=False,
     )
     parser.add_argument("--version", dest="version", action="store_true", help="Show version")
