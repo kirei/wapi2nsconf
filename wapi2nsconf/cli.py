@@ -165,10 +165,9 @@ def main() -> None:
         max_results=conf.wapi.max_results,
     )
 
-    views = conf.ipam.views or [conf.ipam.view]
-
     all_zones: list[InfobloxZone] = []
-    for view in views:
+
+    for view in conf.ipam.get_views():
         logger.debug("Fetching zones for view %s", view)
         all_zones.extend(wapi.zones(view=view))
 

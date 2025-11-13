@@ -56,17 +56,27 @@ class WapiConfiguration(BaseModel):
 
 
 class IpamConfiguration(BaseModel):
-    view: str = Field(default="default")
+    view: str | None = Field(default=None)
     views: list[str] | None = Field(default=None)
     ns_groups: list[str] | None = Field(default=None)
     extattr_key: str | None = Field(default=None)
     extattr_value: str | None = Field(default=None)
 
     @model_validator(mode="after")
+    def check_views(self) -> Self:
+        if self.view and self.views:
+            raise ValueError("Do not use both view and views")
+        return self
+
+    @model_validator(mode="after")
     def check_extattr(self) -> Self:
         if not self.extattr_key and self.extattr_value:
             raise ValueError("extattr_key required when using extattr_value.")
         return self
+
+    def get_views(self) -> list[str]:
+        """Return list of requested views"""
+        return self.views or [self.view or "default"]
 
 
 class MasterConfiguration(BaseModel):
