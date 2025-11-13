@@ -23,7 +23,7 @@ class WapiConfiguration(BaseModel):
     @model_validator(mode="after")
     def check_credentials(self) -> Self:
         if not self.username or not self.password:
-            raise ValueError("Both username and password must be provided for basic auth.")
+            raise ValueError("Both username and password must be provided for basic authentication")
         return self
 
     def get_wapi_version(self) -> float | None:
@@ -71,7 +71,7 @@ class IpamConfiguration(BaseModel):
     @model_validator(mode="after")
     def check_extattr(self) -> Self:
         if not self.extattr_key and self.extattr_value:
-            raise ValueError("extattr_key required when using extattr_value.")
+            raise ValueError("extattr_key required when using extattr_value")
         return self
 
     def get_views(self) -> list[str]:
