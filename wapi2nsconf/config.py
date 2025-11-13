@@ -22,8 +22,8 @@ class WapiConfiguration(BaseModel):
 
     @model_validator(mode="after")
     def check_credentials(self) -> Self:
-        if not self.username or not self.password:
-            raise ValueError("Both username and password must be provided for basic authentication")
+        if bool(self.username) != bool(self.password):
+            raise ValueError("Provide both username and password, or omit both, for basic authentication")
         return self
 
     def get_wapi_version(self) -> float | None:
