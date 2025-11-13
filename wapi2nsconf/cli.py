@@ -150,7 +150,10 @@ def main() -> None:
             conf = Configuration.model_validate(yaml.safe_load(fp))
     except FileNotFoundError:
         parser.print_help()
-        sys.exit(0)
+        sys.exit(1)
+    except Exception as exc:
+        print(exc)
+        sys.exit(1)
 
     if args.check_config:
         sys.exit(0)
