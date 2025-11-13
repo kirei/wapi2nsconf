@@ -2,10 +2,10 @@
 
 import re
 import ssl
-from typing import Any
+from typing import Any, Self
 
 import httpx
-from pydantic import AnyHttpUrl, BaseModel, Field, FilePath
+from pydantic import AnyHttpUrl, BaseModel, Field, FilePath, model_validator
 from pydantic.networks import IPvAnyAddress
 
 
@@ -19,6 +19,12 @@ class WapiConfiguration(BaseModel):
     verify: bool = Field(default=True)
     timeout: int = Field(default=300)
     max_results: int = Field(default=1000, ge=1, le=100000)
+
+    @model_validator(mode="after")
+    def check_credentials(self) -> Self:
+        if bool(self.username) != bool(self.password):
+            raise ValueError("Provide both username and password, or omit both, for basic authentication")
+        return self
 
     def get_wapi_version(self) -> float | None:
         """Get WAPI configuration"""
@@ -38,15 +44,10 @@ class WapiConfiguration(BaseModel):
             kwargs["verify"] = False
         else:
             ctx = ssl.create_default_context(cafile=self.ca_bundle) if self.ca_bundle else ssl.create_default_context()
-
-            if not self.check_hostname:
-                ctx.check_hostname = False
-
+            ctx.check_hostname = self.check_hostname
             kwargs["verify"] = ctx
 
-        if self.username or self.password:
-            if not self.username or not self.password:
-                raise ValueError("Both username and password must be provided for basic auth.")
+        if self.username and self.password:
             kwargs["auth"] = httpx.BasicAuth(username=self.username, password=self.password)
 
         kwargs["timeout"] = httpx.Timeout(timeout=self.timeout)
@@ -55,11 +56,29 @@ class WapiConfiguration(BaseModel):
 
 
 class IpamConfiguration(BaseModel):
-    view: str = Field(default="default")
+    view: str | None = Field(default=None)
     views: list[str] | None = Field(default=None)
     ns_groups: list[str] | None = Field(default=None)
     extattr_key: str | None = Field(default=None)
     extattr_value: str | None = Field(default=None)
+
+    @model_validator(mode="after")
+    def check_views(self) -> Self:
+        if self.view and self.views:
+            raise ValueError("Do not use both view and views")
+        return self
+
+    @model_validator(mode="after")
+    def check_extattr(self) -> Self:
+        if not self.extattr_key and self.extattr_value:
+            raise ValueError("extattr_key required when using extattr_value")
+        return self
+
+    def get_views(self) -> list[str]:
+        """Return list of requested views"""
+        if self.views is not None:
+            return self.views
+        return [self.view or "default"]
 
 
 class MasterConfiguration(BaseModel):
