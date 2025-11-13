@@ -113,7 +113,7 @@ def output_nsconf(
 def main() -> None:
     """Main function"""
 
-    parser = argparse.ArgumentParser(description=f"wapi2nsconf version {__version__}")
+    parser = argparse.ArgumentParser(description="Infoblox WAPI to Nameserver Configuration")
     parser.add_argument(
         "--conf",
         dest="conf_filename",
@@ -135,9 +135,14 @@ def main() -> None:
         help="Templates path",
         required=False,
     )
+    parser.add_argument("--version", dest="version", action="store_true", help="Show version")
     parser.add_argument("--debug", dest="debug", action="store_true", help="Print debug information")
     parser.add_argument("--silent", dest="silent", action="store_true", help="Silent operation")
     args = parser.parse_args()
+
+    if args.version:
+        print(f"wapi2nsconf {__version__}")
+        sys.exit(0)
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
