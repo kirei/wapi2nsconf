@@ -51,7 +51,7 @@ def filter_zones(zones: list[InfobloxZone], ipam_conf: IpamConfiguration) -> lis
     res = []
 
     for zone in zones:
-        if zone.disabled:
+        if zone.disable:
             continue
 
         if ipam_conf.ns_groups is None:

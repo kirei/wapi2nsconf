@@ -14,7 +14,7 @@ MAX_RESULTS = 1000
 @dataclass(frozen=True)
 class InfobloxZone:
     fqdn: str
-    disabled: bool
+    disable: bool
     extattrs: dict
     view: str
     ns_group: str | None = None
@@ -41,7 +41,7 @@ class InfobloxZone:
         return cls(
             fqdn=fqdn,
             ns_group=wzone.get("ns_group"),
-            disabled=wzone.get("disabled", False),
+            disable=wzone.get("disable", False),
             extattrs=wzone.get("extattrs", {}),
             description=description,
             view=view,
